@@ -1,4 +1,6 @@
 import pandas as pd
+from coboljsonifier.parser import Parser
+from coboljsonifier.config.parser_type_enum import ParseType
 
 class ExtractToDataFrame:
     def __init__(self, config_dict):
@@ -26,6 +28,8 @@ class ExtractToDataFrame:
         self.ignorar_ultimas_linhas = config_dict.get('ignorar_ultimas_linhas', 0)
 
         self.posicoes_arquivo = config_dict.get('posicoes_arquivo', None)
+        self.dict_book_arquivo = config_dict.get('dict_book_arquivo', None)
+        
         
 
     def criar_dataframe(self) -> pd.DataFrame:
@@ -53,6 +57,12 @@ class ExtractToDataFrame:
             except Exception as e:
                 raise e
 
+        elif self.tipo_arquivo == 'EBCDIC':
+            try:
+                return self.criar_dataframe_ebcdic()
+            except Exception as e:
+                raise e
+            
         else:
             raise ValueError("Este método só suporta a criação de DataFrame para arquivos do tipo DELIMITADO, POSICIONAL")
 
@@ -97,4 +107,33 @@ class ExtractToDataFrame:
         dataframe = pd.read_parquet(caminho_completo,
                                     engine='pyarrow', columns=self.estrutura_arquivo.keys())
         
+        return dataframe
+    
+    def criar_dataframe_ebcdic(self) -> pd.DataFrame:
+
+        if not self.quantidade_caracteres_linha:
+            raise ValueError("Quantidade de caracteres por linha não especificado para o tipo de arquivo EBCDIC.")
+
+
+        # Caminho completo do arquivo
+        caminho_completo = f"{self.local_arquivo}/{self.nome_arquivo}"
+
+        parser = Parser(self.dict_book_arquivo, ParseType.BINARY_EBCDIC).build()
+
+        arquivo_convertido = []
+
+        with open(caminho_completo, 'rb') as arquivo:
+            while True:
+
+                conteudo_linha = arquivo.read(self.quantidade_caracteres_linha)
+                if not conteudo_linha:
+                    break
+
+                parser.parse(conteudo_linha)
+                dict_conteudo_linha = parser.value
+                arquivo_convertido.append(dict_conteudo_linha)
+        
+        dataframe = pd.DataFrame(arquivo_convertido).astype(self.estrutura_arquivo)
+
+
         return dataframe
