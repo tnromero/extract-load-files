@@ -123,6 +123,9 @@ class ExtractToDataFrame:
         arquivo_convertido = []
 
         with open(caminho_completo, 'rb') as arquivo:
+            if self.ignorar_primeiras_linhas:
+                arquivo.read(self.quantidade_caracteres_linha * self.ignorar_primeiras_linhas)
+        
             while True:
 
                 conteudo_linha = arquivo.read(self.quantidade_caracteres_linha)
