@@ -251,3 +251,25 @@ def test_arquivo_ebcdic_sem_footer():
     # print(df.dtypes)
 
     valida_conteudo_livros(df)
+
+def test_arquivo_ebcdic():
+    configuracoes = {
+        'nome_arquivo': 'livros.cobol',
+        'local_arquivo': 'data/ebcdic',
+        'tipo_arquivo': 'EBCDIC',  # Altere conforme necessário
+        'quantidade_caracteres_linha': 209,
+        'estrutura_arquivo': livro_datatypes,
+        'dict_book_arquivo': dict_book_livros,
+        'ignorar_primeiras_linhas': 1,
+        'ignorar_ultimas_linhas': 1
+    }
+
+    exctract = ExtractToDataFrame(configuracoes)
+    df = exctract.criar_dataframe()
+
+    print(df.head())
+    print(df.info())
+    print(df.dtypes)
+    print(df['ano_lancamento'][11])
+
+    valida_conteudo_livros(df)

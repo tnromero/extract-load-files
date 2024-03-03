@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from coboljsonifier.parser import Parser
 from coboljsonifier.config.parser_type_enum import ParseType
@@ -122,14 +123,20 @@ class ExtractToDataFrame:
 
         arquivo_convertido = []
 
+        tamanho_arquivo = os.path.getsize(caminho_completo)
+        ultimo_byte_para_ler = tamanho_arquivo - (self.ignorar_ultimas_linhas * self.quantidade_caracteres_linha)
+        quantidade_bytes_lidos = 0
+
         with open(caminho_completo, 'rb') as arquivo:
             if self.ignorar_primeiras_linhas:
                 arquivo.read(self.quantidade_caracteres_linha * self.ignorar_primeiras_linhas)
+                quantidade_bytes_lidos = self.quantidade_caracteres_linha * self.ignorar_primeiras_linhas
         
             while True:
 
                 conteudo_linha = arquivo.read(self.quantidade_caracteres_linha)
-                if not conteudo_linha:
+                quantidade_bytes_lidos += self.quantidade_caracteres_linha
+                if not conteudo_linha or quantidade_bytes_lidos > ultimo_byte_para_ler:
                     break
 
                 parser.parse(conteudo_linha)
