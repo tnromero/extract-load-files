@@ -65,7 +65,7 @@ class ExtractToDataFrame:
                 raise e
             
         else:
-            raise ValueError("Este método só suporta a criação de DataFrame para arquivos do tipo DELIMITADO, POSICIONAL")
+            raise ValueError("Este método só suporta a criação de DataFrame para arquivos do tipo DELIMITADO, POSICIONAL, PARQUET ou EBCDIC.")
 
     def criar_dataframe_delimitado(self) -> pd.DataFrame:
         

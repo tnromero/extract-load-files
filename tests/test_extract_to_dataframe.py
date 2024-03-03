@@ -267,9 +267,8 @@ def test_arquivo_ebcdic():
     exctract = ExtractToDataFrame(configuracoes)
     df = exctract.criar_dataframe()
 
-    print(df.head())
-    print(df.info())
-    print(df.dtypes)
-    print(df['ano_lancamento'][11])
+    # print(df.head())
+    # print(df.info())
+    # print(df.dtypes)
 
     valida_conteudo_livros(df)
