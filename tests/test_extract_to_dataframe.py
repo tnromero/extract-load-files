@@ -272,3 +272,44 @@ def test_arquivo_ebcdic():
     # print(df.dtypes)
 
     valida_conteudo_livros(df)
+
+################################################################################
+
+def valida_conteudo_filmes(df:pd.DataFrame):
+    # valida schema
+    assert df.dtypes.get('codigo_filme') == 'int64'
+    assert df.dtypes.get('nome_filme') == 'object'
+    assert df.dtypes.get('data_lancamento') == 'object'
+
+    # valida dados
+    assert df['codigo_filme'][0] == 1
+    assert df['nome_filme'][0] == 'O Poderoso Chefao'
+    assert df['data_lancamento'][0] == '1972-07-07'
+
+    # valida quantidade registros
+    assert len(df) == 3
+
+filmes_datatypes = {
+    "codigo_filme": int,
+    "nome_filme": str,
+    "data_lancamento": str
+}
+
+def test_arquivo_delimitado_com_data():
+    configuracoes = {
+        'nome_arquivo': 'filmes.csv',
+        'local_arquivo': 'data/delimitado',
+        'tipo_arquivo': 'DELIMITADO',  # Altere conforme necessário
+        'delimitador': ',',
+        'estrutura_arquivo': filmes_datatypes,
+        'ignorar_primeiras_linhas': 1,
+        'ignorar_ultimas_linhas': 1
+    }
+
+    exctract = ExtractToDataFrame(configuracoes)
+    df = exctract.criar_dataframe()
+    # print(df.head())
+    # print(df.info())
+    # print(df.dtypes)
+
+    valida_conteudo_filmes(df)
