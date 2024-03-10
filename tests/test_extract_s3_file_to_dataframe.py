@@ -33,7 +33,7 @@ def valida_conteudo_livros(df:pd.DataFrame):
 @pytest.fixture()
 def bucket_mock():
     with mock_aws():
-        print('Criando bucket')
+
         client_s3 = boto3.client('s3')
         client_s3.create_bucket(Bucket=BUCKET_NAME, CreateBucketConfiguration={
             'LocationConstraint': 'eu-west-1',
@@ -391,11 +391,13 @@ def valida_conteudo_filmes(df:pd.DataFrame):
     assert df.dtypes.get('codigo_filme') == pd.Int64Dtype()
     assert df.dtypes.get('nome_filme') == pd.StringDtype()
     assert df.dtypes.get('data_lancamento') == '<M8[ns]'
+    assert df.dtypes.get('data_assistido') == '<M8[ns]'
 
     # valida dados
     assert df['codigo_filme'][0] == 1
     assert df['nome_filme'][0] == 'O Poderoso Chefao'
     assert df['data_lancamento'][0] == datetime64('1972-07-07')
+    assert df['data_assistido'][0] == datetime64('2000-10-15')
 
     # valida quantidade registros
     assert len(df) == 3
@@ -403,7 +405,8 @@ def valida_conteudo_filmes(df:pd.DataFrame):
 filmes_datatypes = {
     "codigo_filme": pd.Int64Dtype(),
     "nome_filme": pd.StringDtype(),
-    "data_lancamento": pd.StringDtype()
+    "data_lancamento": pd.StringDtype(),
+    "data_assistido": pd.StringDtype()
 }
 
 @mock_aws
@@ -424,20 +427,112 @@ def test_arquivo_delimitado_com_data(bucket_mock):
         'delimitador': ',',
         'estrutura_arquivo': filmes_datatypes,
         'ignorar_primeiras_linhas': 1,
-        'ignorar_ultimas_linhas': 1
+        'ignorar_ultimas_linhas': 1,
+        'converte_datas': [('data_lancamento', '%Y-%m-%d'), ('data_assistido', '%d.%m.%Y')]
     }
 
     exctract = ExtractS3FileToDataFrame(configuracoes)
     df = exctract.criar_dataframe()
-    print(df.head())
-    print(df.info())
-    print(df.dtypes)
+    # print(df.head())
+    # print(df.info())
+    # print(df.dtypes)
 
-    print('Converter campo data')
-    df['data_lancamento'] = pd.to_datetime(df['data_lancamento'], format='%Y-%m-%d')
-    print(df.head())
-    print(df.info())
-    print(df.dtypes)
+    exctract.converte_datetime(df=df, lista_campos_data=configuracoes['converte_datas'])
 
 
     valida_conteudo_filmes(df)
+
+################################################################################
+    
+def test_nome_bucket_nao_informado():
+    configuracoes = dict()
+    with pytest.raises(ValueError) as excinfo:
+        ExtractS3FileToDataFrame(configuracoes)
+    assert str(excinfo.value) == 'nome_bucket é um valor obrigatório'
+
+def test_nome_arquivo_nao_informado():
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+    }
+    with pytest.raises(ValueError) as excinfo:
+        ExtractS3FileToDataFrame(configuracoes)
+    assert str(excinfo.value) == 'nome_arquivo é um valor obrigatório'
+
+def test_diretorio_arquivo_nao_informado():
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+        'nome_arquivo': 'filmes.csv',
+    }
+    with pytest.raises(ValueError) as excinfo:
+        ExtractS3FileToDataFrame(configuracoes)
+    assert str(excinfo.value) == 'diretorio_arquivo é um valor obrigatório'
+
+def test_tipo_arquivo_nao_informado():
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+        'nome_arquivo': 'filmes.csv',
+        'diretorio_arquivo': 'xpto'
+    }
+    with pytest.raises(ValueError) as excinfo:
+        ExtractS3FileToDataFrame(configuracoes)
+    assert str(excinfo.value) == 'tipo_arquivo inválido. Valores válidos são: DELIMITADO, POSICIONAL, EBCDIC ou PARQUET.'
+
+def test_tipo_arquivo_nao_informado():
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+        'nome_arquivo': 'filmes.csv',
+        'diretorio_arquivo': 'xpto'
+    }
+    with pytest.raises(ValueError) as excinfo:
+        ExtractS3FileToDataFrame(configuracoes)
+    assert str(excinfo.value) == 'tipo_arquivo inválido. Valores válidos são: DELIMITADO, POSICIONAL, EBCDIC ou PARQUET.'
+
+
+def test_quantidade_caracteres_linha_nao_informada():
+
+    # executa teste
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+        'nome_arquivo': 'livros.cobol',
+        'diretorio_arquivo': 'data/ebcdic',
+        'tipo_arquivo': 'EBCDIC'  # Altere conforme necessário
+    }
+
+    exctract = ExtractS3FileToDataFrame(configuracoes)
+    with pytest.raises(ValueError) as excinfo:
+        exctract.criar_dataframe()
+    assert str(excinfo.value) == 'Quantidade de caracteres por linha não especificado para o tipo de arquivo EBCDIC.'
+
+
+def test_posicoes_arquivo_nao_informada():
+    
+    # executa teste
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+        'nome_arquivo': 'livros.txt',
+        'diretorio_arquivo': 'data/posicional',
+        'tipo_arquivo': 'POSICIONAL',  # Altere conforme necessário
+        'estrutura_arquivo': livro_datatypes,
+        'ignorar_primeiras_linhas': 1,
+        'ignorar_ultimas_linhas': 1
+    }
+    exctract = ExtractS3FileToDataFrame(configuracoes)
+    with pytest.raises(ValueError) as excinfo:
+        exctract.criar_dataframe()
+    assert str(excinfo.value) == 'Posiciones dos atributos no arquivo não especificado para o tipo de arquivo POSICIONAL.'
+
+def test_delimitado_nao_informado():
+
+    # executa teste
+    configuracoes = {
+        'nome_bucket': BUCKET_NAME,
+        'nome_arquivo': 'livros_sem_header_sem_footer.csv',
+        'diretorio_arquivo': 'data/delimitado',
+        'tipo_arquivo': 'DELIMITADO',  # Altere conforme necessário
+        'estrutura_arquivo': livro_datatypes
+    }
+
+    exctract = ExtractS3FileToDataFrame(configuracoes)
+    with pytest.raises(ValueError) as excinfo:
+        exctract.criar_dataframe()
+    assert str(excinfo.value) == 'Delimitador não especificado para o tipo de arquivo DELIMITADO.'

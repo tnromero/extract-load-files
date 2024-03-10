@@ -23,9 +23,9 @@ class ExtractS3FileToDataFrame:
 		if not self.diretorio_arquivo:
 			raise ValueError("diretorio_arquivo é um valor obrigatório")
 		
-		tipo_arquivo = config.get('tipo_arquivo', None).upper()
-		if tipo_arquivo in {'DELIMITADO', 'POSICIONAL', 'EBCDIC', 'PARQUET'}:
-			self.tipo_arquivo = tipo_arquivo
+		tipo_arquivo = config.get('tipo_arquivo', None)
+		if tipo_arquivo and tipo_arquivo.upper() in {'DELIMITADO', 'POSICIONAL', 'EBCDIC', 'PARQUET'}:
+			self.tipo_arquivo = tipo_arquivo.upper()
 		else:
 			raise ValueError("tipo_arquivo inválido. Valores válidos são: DELIMITADO, POSICIONAL, EBCDIC ou PARQUET.")
 		
@@ -160,3 +160,8 @@ class ExtractS3FileToDataFrame:
 		dataframe = pd.DataFrame(arquivo_convertido).astype(self.estrutura_arquivo)
 
 		return dataframe
+	
+	def converte_datetime(self, df: pd.DataFrame, lista_campos_data:list) -> None:
+
+		for campo_data in lista_campos_data:
+			df[campo_data[0]] = pd.to_datetime(df[campo_data[0]], format=campo_data[1])

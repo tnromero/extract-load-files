@@ -292,7 +292,8 @@ def valida_conteudo_filmes(df:pd.DataFrame):
 filmes_datatypes = {
     "codigo_filme": int,
     "nome_filme": str,
-    "data_lancamento": str
+    "data_lancamento": str,
+    "data_assistido": str
 }
 
 def test_arquivo_delimitado_com_data():
