@@ -23,3 +23,7 @@ class ExtractFileToDataFrame(ABC):
     @abstractmethod
     def criar_dataframe_parquet(self) -> pd.DataFrame:
         pass
+
+    @abstractmethod
+    def converte_datetime(self, df: pd.DataFrame, lista_campos_data:list) -> None:
+        pass

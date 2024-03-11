@@ -157,3 +157,8 @@ class ExtractLocalFileToDataFrame(ExtractFileToDataFrame):
         dataframe = pd.DataFrame(arquivo_convertido).astype(self.estrutura_arquivo)
 
         return dataframe
+    
+    def converte_datetime(self, df: pd.DataFrame, lista_campos_data:list) -> None:
+
+        for campo_data in lista_campos_data:
+            df[campo_data[0]] = pd.to_datetime(df[campo_data[0]], format=campo_data[1])
